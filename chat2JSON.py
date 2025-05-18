@@ -1,13 +1,3 @@
-"""
-chat_to_json.py
----------------
-Call a Mistral chat model and save its reply (guaranteed valid JSON)
-to output.json. Requires:
-
-    pip install mistralai python-dotenv
-    echo "MISTRAL_API_KEY=sk-..." > .env
-"""
-
 import os
 import json
 from pathlib import Path
@@ -24,14 +14,9 @@ MODEL  = "mistral-large-latest"             # change if you prefer
 
 # Define a helper that always returns JSON + usage
 def llm_to_json(user_prompt: str, **chat_kwargs):
-    """
-    Send `user_prompt` to the LLM and return (python_dict, usage_obj).
-    `chat_kwargs` are forwarded to chat.complete (temperature, etc.).
-    """
     messages = [
         {
             "role": "system",
-            # Keep it short but strict; JSON mode enforces it anyway.
             "content": "You are a JSON generator.",
         },
         {
@@ -49,12 +34,14 @@ def llm_to_json(user_prompt: str, **chat_kwargs):
 
     # The SDK guarantees valid JSON when that flag is set
     data  = json.loads(response.choices[0].message.content)
-    usage = response.usage                      # prompt_tokens, etc.
+    usage = response.usage                      # prompt_tokens
     return data, usage
 
 
 if __name__ == "__main__":
-    prompt = "Give me a car description with keys make, model, year, color, star sign, tire material."
+    prompt = """The user will give an input for you to turn into optional keys that will be only Constellation, Star. 
+    In that order. Since this is optional, the alternative would be 0. The USER says: 
+    Where is the star Ax207b?"""
 
     try:
         payload, usage = llm_to_json(prompt)
@@ -62,7 +49,7 @@ if __name__ == "__main__":
         print("LLM call failed:", e)
         raise
 
-    # Save prettified JSON for inspection
+    # Save prettified JSON
     out_path = Path("output.json")
     out_path.write_text(json.dumps(payload, indent=2))
     print(f"Saved JSON to {out_path}")
