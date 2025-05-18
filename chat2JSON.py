@@ -39,9 +39,12 @@ def llm_to_json(user_prompt: str, **chat_kwargs):
 
 
 if __name__ == "__main__":
-    prompt = """The user will give an input for you to turn into optional keys that will be only Constellation, Star. 
-    In that order. Since this is optional, the alternative would be 0. The USER says: 
-    Where is the star Ax207b?"""
+    prompt = """The user will give an input for you to turn into optional keys that will be only Constellation, Star, ASKCONVIS, ASKSTAVIS, ASKSTAPAR, ASKCONCHI. 
+    In that order. ASKCONVIS will be a 1 if they ask about the visibility of a constellation. ASKSTAVIS for the visibility of a star. 
+    ASKSTAPAR for when they ask about the constellation a star belongs to. ASKCONCHI for when they ask about the stars in a constellation.
+    Since this is optional, the alternative would be 0.
+    The USER says: 
+    What constellation is star Vega in?"""
 
     try:
         payload, usage = llm_to_json(prompt)
