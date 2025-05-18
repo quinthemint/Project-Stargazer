@@ -4,7 +4,7 @@ import pytz
 from pyDatalog import pyDatalog
 
 
-pyDatalog.create_terms('X, Y, Z, Star, Constellation, constellation, star, latitude, longitude, time, is_in_constellation')
+pyDatalog.create_terms('X, Y, Z, Star, Constellation, constellation, star, is_in_constellation')
 
 + constellation('orion')
 + constellation('lyra')
@@ -37,8 +37,6 @@ pyDatalog.create_terms('X, Y, Z, Star, Constellation, constellation, star, latit
 + star('epsilon centauri', '35Eps Cen', 'centaurus', '14 45 14.6', '-53 28 26')
 + star('theta centauri', '3The Cen', 'centaurus', '13 55 32.4', '-48 13 00')
 + star('iota centauri', '1Iot Cen', 'centaurus', '13 50 41.8', '-36 16 36')
-
-is_in_constellation(Star, Constellation) <= star(Star, Constellation, X, Y)
 
 
 def calculate_lst(longitude, time):
@@ -110,10 +108,26 @@ longitude = -120.6596
 latitude = 35.2828
 time = datetime.now(pytz.UTC)
 
-star_facts = star(Star, Constellation, X, Y, Z)
 
-for star in star_facts:
-    star_name, bayer, constellation_name, ra, dec = star
+# Case: is ____ star visible?
+# star_facts = star(Star, Constellation, X, Y, Z)
 
-    temp = is_star_visible(ra, dec, longitude, latitude, time)
-    print(f"Visible?: {temp[0]}, Alt: {temp[1]}, Az: {temp[2]}, Name: {star_name}")
+# for star in star_facts:
+#     star_name, bayer, constellation_name, ra, dec = star
+
+#     temp = is_star_visible(ra, dec, longitude, latitude, time)
+#     print(f"Visible?: {temp[0]}, Alt: {temp[1]}, Az: {temp[2]}, Name: {star_name}")
+
+# Case: what constellation does ____ star belong to?
+star_name = ''
+is_in_constellation(Star, Constellation) <= star(Star, X, Constellation, Y, Z)
+result = is_in_constellation('vega', X)
+print(", ".join([x[0] for x in result]))
+
+'''
+Questions that can be answered:
+- is ____ star visible?
+- is ____ constellation visible?
+- what stars are in ____ constellation?
+- what constellation does ____ star belong to?
+'''
