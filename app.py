@@ -1,7 +1,10 @@
 import streamlit as st
 from mistralai import Mistral
 import os
+import json
 from dotenv import load_dotenv
+from chat2JSON import llm_to_json
+# from star_calc import 
 
 # Load API key
 load_dotenv()
@@ -41,22 +44,12 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # Prepare messages for API (system + chat history)
-    messages = [{"role": "system", "content": "You are a helpful astronomy expert."}]
-    messages.extend(st.session_state.messages)
-
-    # Call Mistral API
     try:
-        response = client.chat.complete(
-            model="mistral-large-latest",
-            messages=messages,
-        )
-        bot_reply = response.choices[0].message.content
+        data, _ = llm_to_json(user_input)
+        bot_reply = f"Parsed intent:\n```json\n{json.dumps(data, indent=2)}\n```"
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
 
-    # Show assistant reply
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
     with st.chat_message("assistant"):
         st.markdown(bot_reply)
-

@@ -14,10 +14,16 @@ MODEL  = "mistral-large-latest"             # change if you prefer
 
 # Define a helper that always returns JSON + usage
 def llm_to_json(user_prompt: str, **chat_kwargs):
+    # in testing, note both what constellation a star belongs to and 
+    # where a star is can be interpreted as "where is X star"
     messages = [
         {
             "role": "system",
-            "content": "You are a JSON generator.",
+            "content": """You are a JSON generator.
+            The user will give an input for you to turn into optional keys that will be only Constellation, Star, ASKCONVIS, ASKSTAVIS, ASKSTAPAR, ASKCONCHI.
+            ASKCONVIS will be a 1 if they ask about the visibility of a constellation. ASKSTAVIS will be a 1 if they ask about the visibility of a star. 
+            ASKSTAPAR will be a 1 if they ask about the constellation a star belongs to. ASKCONCHI will be a 1 if they ask about the stars in a constellation.
+            Always include all fields; any field not set to 1 is set to 0""",
         },
         {
             "role": "user",
