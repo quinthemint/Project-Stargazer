@@ -2,6 +2,7 @@ import math
 from datetime import datetime
 import pytz
 from pyDatalog import pyDatalog
+from user_state import user
 
 terms = 'X, Y, Z, Star, Constellation, constellation, star, is_in_constellation'
 exec(f"from pyDatalog import pyDatalog; pyDatalog.create_terms('{terms}')", globals())
@@ -42,20 +43,7 @@ def initialize_datalog():
     + star('theta centauri', '3The Cen', 'centaurus', '13 55 32.4', '-48 13 00')
     + star('iota centauri', '1Iot Cen', 'centaurus', '13 50 41.8', '-36 16 36')
 
-# utils for user info and reading llm json input
-
-class UserInfo:
-    def __init__(self, longitude=0, latitude=0, time=None):
-        self.longitude = longitude
-        self.latitude = latitude
-        self.time = time or datetime.now(pytz.UTC)
-
-    def set_info(self, user_long, user_lat, user_time):
-        self.longitude = user_long
-        self.latitude = user_lat
-        self.time = user_time
-
-user_info = UserInfo()
+# utils for reading llm json input
 
 class Query:
     def __init__(self, constellation=None, star=None, ASKCONVIS=0, ASKSTAVIS=0, ASKSTAPAR=0, ASKCONCHI=0):
@@ -150,11 +138,17 @@ def calculate_star_visibility(ra, dec, longitude, latitude, time):
     
     az = math.degrees(math.atan2(sin_az, cos_az))
     az = (az + 360) % 360  # Ensure Azimuth is in the range [0, 360]
+
+    print("AZIMUTH: ")
+    print(az)
+    print("ALTITUDE: ")
+    print(alt)
     
     # Return true if the altitude is above the horizon
     return alt > 0, alt, az
 
 def is_star_visible(star_name):
+    print("IN KB: " + str(user.latitude) + str(user.longitude) + str(user.time))
     # Query the database for the star by name
     result = pyDatalog.ask(f"star('{star_name}', Bayer, Constellation, RA, Dec)")
     
@@ -166,7 +160,7 @@ def is_star_visible(star_name):
     bayer, constellation, ra, dec = result.answers[0]
 
     # Calculate visibility
-    is_visible, alt, az = calculate_star_visibility(ra, dec, user_info.longitude, user_info.latitude, user_info.time)
+    is_visible, alt, az = calculate_star_visibility(ra, dec, user.longitude, user.latitude, user.time)
 
     # Return result as a dictionary or tuple
     dict = {'name': star_name,

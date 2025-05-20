@@ -5,6 +5,7 @@ import json
 from dotenv import load_dotenv
 from chat2JSON import llm_to_json, json_to_llm
 from star_calc import Query
+from user_state import user
 
 # Load API key
 load_dotenv()
@@ -14,11 +15,12 @@ if not api_key:
     st.stop()
 
 with st.sidebar:
-    longitude = st.text_input("Longitude", placeholder="e.g. -122.4194")
     latitude = st.text_input("Latitude", placeholder="e.g. 37.7749")
+    longitude = st.text_input("Longitude", placeholder="e.g. -122.4194")
     time_utc = st.text_input("UTC Time", placeholder="YYYY-MM-DD or full ISO")
 
-#set_user_info(longitude, latitude, time_utc)
+user.set_info(longitude, latitude, time_utc)
+print("IN APP: " + str(user.latitude) + str(user.longitude) + str(user.time))
 
 # Initialize Mistral client
 client = Mistral(api_key=api_key)
@@ -46,6 +48,7 @@ if user_input:
     try:
         data, _ = llm_to_json(user_input)
         bot_reply = f"Parsed intent:\n```json\n{json.dumps(data, indent=2)}\n```"
+        print(bot_reply)
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
 
@@ -60,9 +63,10 @@ if user_input:
     # TODO implement other query capabilities
     query_output = query.handle_query()
 
+    print(f"Parsed intent:\n```json\n{json.dumps(query_output, indent=2)}\n```")
     # send this back to the llm
     try:
-        bot_reply, _ = json_to_llm(user_input)
+        bot_reply, _ = json_to_llm(query_output)
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
 
