@@ -43,6 +43,29 @@ def llm_to_json(user_prompt: str, **chat_kwargs):
     usage = response.usage                      # prompt_tokens
     return data, usage
 
+# instructs llm to turn json with output info into natural language
+def json_to_llm(data: dict, **chat_kwargs):
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a formatter that turns structured JSON data about stars into clear, natural language.
+            Explain whether the star is visible, where it is (altitude and azimuth), and what constellation it belongs to.
+            Avoid repeating field names or JSON terms in the output — just speak like a knowledgeable astronomy assistant.
+            """,
+        },
+        {
+            "role": "user",
+            "content": json.dumps(data, indent=2),
+        },
+    ]
+
+    response = client.chat.complete(
+        model=MODEL,
+        messages=messages,
+        **chat_kwargs,
+    )
+
+    return response.choices[0].message.content, response.usage
 
 if __name__ == "__main__":
     prompt = """The user will give an input for you to turn into optional keys that will be only Constellation, Star, ASKCONVIS, ASKSTAVIS, ASKSTAPAR, ASKCONCHI. 

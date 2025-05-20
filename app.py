@@ -3,8 +3,8 @@ from mistralai import Mistral
 import os
 import json
 from dotenv import load_dotenv
-from chat2JSON import llm_to_json
-# from star_calc import 
+from chat2JSON import llm_to_json, json_to_llm
+from star_calc import Query
 
 # Load API key
 load_dotenv()
@@ -18,9 +18,7 @@ with st.sidebar:
     latitude = st.text_input("Latitude", placeholder="e.g. 37.7749")
     time_utc = st.text_input("UTC Time", placeholder="YYYY-MM-DD or full ISO")
 
-print(longitude + "\n")
-print(latitude + "\n")
-print(time_utc + "\n")
+#set_user_info(longitude, latitude, time_utc)
 
 # Initialize Mistral client
 client = Mistral(api_key=api_key)
@@ -44,9 +42,24 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
+    # first call - llm produces json output
     try:
         data, _ = llm_to_json(user_input)
         bot_reply = f"Parsed intent:\n```json\n{json.dumps(data, indent=2)}\n```"
+    except Exception as e:
+        bot_reply = f"❌ API call failed: {e}"
+    
+    # format json query
+    query = Query()
+    query.update_from_json(data)
+
+    # calculate position - only star visibility
+    # TODO implement other query capabilities
+    query_output = query.handle_query()
+
+    # send this back to the llm
+    try:
+        bot_reply = json_to_llm(user_input)
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
 
