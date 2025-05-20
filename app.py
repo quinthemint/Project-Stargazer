@@ -48,6 +48,9 @@ if user_input:
         bot_reply = f"Parsed intent:\n```json\n{json.dumps(data, indent=2)}\n```"
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
+
+    # DEBUG 
+    print(bot_reply)
     
     # format json query
     query = Query()
@@ -59,7 +62,7 @@ if user_input:
 
     # send this back to the llm
     try:
-        bot_reply = json_to_llm(user_input)
+        bot_reply, _ = json_to_llm(user_input)
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
 

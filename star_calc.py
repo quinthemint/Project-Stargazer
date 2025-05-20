@@ -3,10 +3,12 @@ from datetime import datetime
 import pytz
 from pyDatalog import pyDatalog
 
-def initialize_datalog():
-    pyDatalog.clear()
+terms = 'X, Y, Z, Star, Constellation, constellation, star, is_in_constellation'
+exec(f"from pyDatalog import pyDatalog; pyDatalog.create_terms('{terms}')", globals())
 
-    pyDatalog.create_terms('X, Y, Z, Star, Constellation, constellation, star, is_in_constellation')
+def initialize_datalog():
+
+    pyDatalog.clear()
 
     + constellation('orion')
     + constellation('lyra')
@@ -74,10 +76,15 @@ class Query:
             'askconchi': 'ASKCONCHI'
         }
 
-        for raw_key, value in json_data.items():
+        for raw_key, raw_value in json_data.items():
             key = raw_key.strip().lower()
-            if key in key_map:
-                setattr(self, key_map[key], value)
+            if key == "constellation" or key == "star":
+                if raw_value:
+                    value = raw_value.strip().lower()
+                    setattr(self, key_map[key], value)
+                
+            elif key in key_map:
+                setattr(self, key_map[key], raw_value)
     
     def handle_query(self):
         initialize_datalog()
@@ -162,6 +169,16 @@ def is_star_visible(star_name):
     is_visible, alt, az = calculate_star_visibility(ra, dec, user_info.longitude, user_info.latitude, user_info.time)
 
     # Return result as a dictionary or tuple
+    dict = {'name': star_name,
+        'bayer': bayer,
+        'constellation': constellation,
+        'visible': is_visible,
+        'altitude': alt,
+        'azimuth': az
+    }
+
+    print(dict)
+
     return {
         'name': star_name,
         'bayer': bayer,
