@@ -15,12 +15,18 @@ if not api_key:
     st.stop()
 
 with st.sidebar:
-    latitude = st.text_input("Latitude", placeholder="e.g. 37.7749")
-    longitude = st.text_input("Longitude", placeholder="e.g. -122.4194")
+    latitude = st.text_input("Latitude", placeholder="e.g. 35.2828")
+    longitude = st.text_input("Longitude", placeholder="e.g. -120.6596")
     time_utc = st.text_input("UTC Time", placeholder="YYYY-MM-DD or full ISO")
 
-user.set_info(longitude, latitude, time_utc)
-print("IN APP: " + str(user.latitude) + str(user.longitude) + str(user.time))
+    if longitude and latitude:
+        try:
+            user.set_info(longitude, latitude, time_utc)
+            print("IN APP: " + str(user.latitude) + str(user.longitude) + str(user.time))
+        except ValueError:
+            st.error("Invalid input. Please enter valid numeric values for latitude and longitude.")
+    else:
+        st.warning("Welcome! Please input an approximate latitude and longitude to get started.")
 
 # Initialize Mistral client
 client = Mistral(api_key=api_key)

@@ -154,7 +154,9 @@ def is_star_visible(star_name):
     
     if not result:
         print(f"Star '{star_name}' not found in the database.")
-        return None
+        return {'name': star_name,
+        'visible': 'star not in database'
+         }
 
     # Extract the first (and should be only) result
     bayer, constellation, ra, dec = result.answers[0]
