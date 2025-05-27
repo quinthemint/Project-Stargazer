@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 from chat2JSON import llm_to_json, json_to_llm
 from star_calc import Query
 from user_state import user
-
+from datetime import datetime
+import pytz
 # Load API key
 load_dotenv()
 api_key = os.getenv("MISTRAL_API_KEY")
@@ -15,9 +16,21 @@ if not api_key:
     st.stop()
 
 with st.sidebar:
-    latitude = st.text_input("Latitude", placeholder="e.g. 35.2828")
-    longitude = st.text_input("Longitude", placeholder="e.g. -120.6596")
-    time_utc = st.text_input("UTC Time", placeholder="YYYY-MM-DD or full ISO")
+    with st.sidebar:
+        latitude = st.text_input("Latitude", placeholder="e.g. 35.2828")
+        longitude = st.text_input("Longitude", placeholder="e.g. -120.6596")
+
+        # widgets
+        selected_date = st.date_input("Select a date", value=datetime.utcnow().date())
+        selected_time = st.time_input("Select a time", value=datetime.utcnow().time())
+        local_datetime = datetime.combine(selected_date, selected_time)
+
+        # local time 
+        local_tz = pytz.timezone("America/Los_Angeles")
+        local_dt_with_tz = local_tz.localize(local_datetime)
+        time_utc = local_dt_with_tz.astimezone(pytz.utc).isoformat()
+
+
 
     if longitude and latitude:
         try:
