@@ -79,6 +79,10 @@ class Query:
         if self.ASKSTAVIS:
             if self.star is not None:
                 return is_star_visible(self.star)
+            
+        if self.ASKCONVIS:
+            if self.constellation is not None:
+                return is_constellation_visible(self.constellation)
 
 def calculate_lst(longitude, time):
     # Julian date for the given time
@@ -183,6 +187,33 @@ def is_star_visible(star_name):
         'altitude': alt,
         'azimuth': az
     }
+
+def is_constellation_visible(constellation_name):
+    result = py.Datalog.ask(f"star(Star, Bayer, '{constellation_name}', RA, Dec)")
+
+    if not result or not result.answers:
+        print(f"Constellation '{constellation_name}' not found in the database.")
+        return {'name': constellation_name,
+        'visible': 'constellation not in database'
+         }
+    
+    visible_stars = []
+    for star, bayer, ra, dec in result.answers:
+        is_visible, alt, az = calculate_star_visibility(ra, dec, user.longitude, user.latitude, user.time)
+        if is_visible:
+            visible_stars.append({
+                'name': star,
+                'bayer': bayer,
+                'altitude': alt,
+                'azimuth': az
+            })
+
+    return {
+        'constellation': constellation_name,
+        'visible': len(visible_stars) > 0,
+        'stars_visible': visible_stars
+    }
+
 
 # Case: what constellation does ____ star belong to?
 # star_name = ''
