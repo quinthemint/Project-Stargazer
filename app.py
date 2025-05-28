@@ -8,6 +8,7 @@ from star_calc import Query
 from user_state import user
 from datetime import datetime
 import pytz
+
 # Load API key
 load_dotenv()
 api_key = os.getenv("MISTRAL_API_KEY")
@@ -29,8 +30,6 @@ with st.sidebar:
         local_tz = pytz.timezone("America/Los_Angeles")
         local_dt_with_tz = local_tz.localize(local_datetime)
         time_utc = local_dt_with_tz.astimezone(pytz.utc).isoformat()
-
-
 
     if longitude and latitude:
         try:
@@ -63,32 +62,37 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # first call - llm produces json output
+    # ────────────────────────────────────────────────────────────────
+    # allow multiple intents in one prompt
+    # ────────────────────────────────────────────────────────────────
     try:
-        data, _ = llm_to_json(user_input)
-        bot_reply = f"Parsed intent:\n```json\n{json.dumps(data, indent=2)}\n```"
-        print(bot_reply)
+        data, _ = llm_to_json(user_input)        # expects {"intents":[…]}
+        print("RAW intents JSON:", json.dumps(data, indent=2))
+    except Exception as e:
+        bot_reply = f"❌ API call failed: {e}"
+        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+        with st.chat_message("assistant"):
+            st.markdown(bot_reply)
+        st.stop()
+
+    # Build and execute a Query for each intent object
+    results = []
+    for intent in data.get("intents", []):
+        query = Query()
+        query.update_from_json(intent)
+        query_output = query.handle_query()      # may return None
+        if query_output is not None:
+            results.append(query_output)
+
+    # Send the LIST of results back to the LLM for natural-language reply
+    try:
+        bot_reply, _ = json_to_llm(results)
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
 
-    # DEBUG 
-    print(bot_reply)
-    
-    # format json query
-    query = Query()
-    query.update_from_json(data)
-
-    # calculate position - only star visibility
-    # TODO implement other query capabilities
-    query_output = query.handle_query()
-
-    print(f"Parsed intent:\n```json\n{json.dumps(query_output, indent=2)}\n```")
-    # send this back to the llm
-    try:
-        bot_reply, _ = json_to_llm(query_output)
-    except Exception as e:
-        bot_reply = f"❌ API call failed: {e}"
-
+    # ────────────────────────────────────────────────────────────────
+    # Display assistant message
+    # ────────────────────────────────────────────────────────────────
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
     with st.chat_message("assistant"):
         st.markdown(bot_reply)
