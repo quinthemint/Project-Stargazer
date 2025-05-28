@@ -79,6 +79,14 @@ class Query:
         if self.ASKSTAVIS:
             if self.star is not None:
                 return is_star_visible(self.star)
+            
+        if self.ASKCONVIS:
+            if self.constellation is not None:
+                return is_constellation_visible(self.constellation)
+            
+        if self.ASKCONCHI:
+            if self.constellation is not None:
+                return get_constellation_stars(self.constellation)
 
 def calculate_lst(longitude, time):
     # Julian date for the given time
@@ -154,7 +162,9 @@ def is_star_visible(star_name):
     
     if not result:
         print(f"Star '{star_name}' not found in the database.")
-        return None
+        return {'name': star_name,
+        'visible': 'star not in database'
+         }
 
     # Extract the first (and should be only) result
     bayer, constellation, ra, dec = result.answers[0]
@@ -180,6 +190,55 @@ def is_star_visible(star_name):
         'visible': is_visible,
         'altitude': alt,
         'azimuth': az
+    }
+
+def is_constellation_visible(constellation_name):
+    result = py.Datalog.ask(f"star(Star, Bayer, '{constellation_name}', RA, Dec)")
+
+    if not result or not result.answers:
+        print(f"Constellation '{constellation_name}' not found in the database.")
+        return {'name': constellation_name,
+        'visible': 'constellation not in database'
+         }
+    
+    visible_stars = []
+    for star, bayer, ra, dec in result.answers:
+        is_visible, alt, az = calculate_star_visibility(ra, dec, user.longitude, user.latitude, user.time)
+        if is_visible:
+            visible_stars.append({
+                'name': star,
+                'bayer': bayer,
+                'altitude': alt,
+                'azimuth': az
+            })
+
+    return {
+        'constellation': constellation_name,
+        'visible': len(visible_stars) > 0,
+        'stars_visible': visible_stars
+    }
+
+def get_constellation_stars(constellation_name):
+    result = pyDatalog.ask(f"star(Star, Bayer, '{constellation_name}', RA, Dec)")
+
+    if not result or not result.answers:
+        return {
+            'constellation': constellation_name,
+            'stars': 'constellation not in database'
+        }
+    
+    stars = []
+    for star, bayer, ra, dec in result.answers:
+        stars.append({
+            'name': star,
+            'bayer': bayer,
+            'ra': ra,
+            'dec': dec
+        })
+
+    return {
+        'constellation': constellation_name,
+        'stars': stars
     }
 
 # Case: what constellation does ____ star belong to?

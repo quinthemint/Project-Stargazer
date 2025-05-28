@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -10,26 +11,50 @@ api_key = os.getenv("MISTRAL_API_KEY")
 if not api_key:
     raise RuntimeError("Missing MISTRAL_API_KEY in .env")
 client = Mistral(api_key=api_key)
-MODEL  = "mistral-large-latest"             # change if you prefer
+MODEL  = "mistral-large-latest" # model selection
 
 # Define a helper that always returns JSON + usage
 def llm_to_json(user_prompt: str, **chat_kwargs):
-    # in testing, note both what constellation a star belongs to and 
-    # where a star is can be interpreted as "where is X star"
     messages = [
         {
             "role": "system",
-            "content": """You are a JSON generator.
-            The user will give an input for you to turn into optional keys that will be only Constellation, Star, ASKCONVIS, ASKSTAVIS, ASKSTAPAR, ASKCONCHI.
-            ASKCONVIS will be a 1 if they ask about the visibility of a constellation. ASKSTAVIS will be a 1 if they ask about the visibility of a star. 
-            ASKSTAPAR will be a 1 if they ask about the constellation a star belongs to. ASKCONCHI will be a 1 if they ask about the stars in a constellation.
-            Always include all fields; any field not set to 1 is set to 0""",
+            "content": """
+            You are a JSON generator.
+            **Output format**  
+            Return ONE top-level JSON object with exactly one key: **"intents"**.  
+            That key maps to an ARRAY.  Each element of the array is an **intent
+            object** describing a single user request.
+
+            **Fields inside every intent object**
+
+            | Field          | Type   | Meaning                                                     |
+            |----------------|--------|-------------------------------------------------------------|
+            | "Constellation"| string | Name of the constellation the user mentioned, lowercase; empty string "" if not applicable. |
+            | "Star"         | string | Common name of the star mentioned, lowercase; empty string "" if not applicable. |
+            | "ASKCONVIS"    | 0 or 1 | 1 → user asks about the VISIBILITY of a constellation.      |
+            | "ASKSTAVIS"    | 0 or 1 | 1 → user asks about the VISIBILITY of a star.               |
+            | "ASKSTAPAR"    | 0 or 1 | 1 → user asks **which constellation** a star belongs to.    |
+            | "ASKCONCHI"    | 0 or 1 | 1 → user asks for the **stars contained in** a constellation. |
+
+            Include **all six fields** in every intent.  
+            Set a flag to 1 when you are confident OR uncertain it applies; set to 0 when it clearly does not.
+
+            **Multiple questions in one sentence**  
+            If the user's input contains several separate questions relating to more than one object (star/constellation), create **one
+            intent object per related object**, in the order they appear, and place them
+            all inside the "intents" array.
+
+            **Constraints**
+            * The top level MUST be: `{ "intents": [ {...}, {...}, ... ] }`
+            """
         },
         {
             "role": "user",
             "content": user_prompt,
         },
     ]
+
+    time.sleep(1.1) # important, this prevents exceeding rate limit
 
     response = client.chat.complete(
         model=MODEL,
@@ -49,8 +74,9 @@ def json_to_llm(data: dict, **chat_kwargs):
         {
             "role": "system",
             "content": """You are a formatter that turns structured JSON data about stars into clear, natural language.
-            Explain whether the star is visible, where it is (altitude and azimuth), and what constellation it belongs to.
-            Avoid repeating field names or JSON terms in the output — just speak like a knowledgeable astronomy assistant.
+            Explain whether the star is visible, where it is (altitude and azimuth), and what constellation it belongs to if the
+            respective information is provided. Avoid repeating field names or JSON terms in the output — 
+            just speak like a knowledgeable astronomy assistant.
             """,
         },
         {
@@ -66,26 +92,3 @@ def json_to_llm(data: dict, **chat_kwargs):
     )
 
     return response.choices[0].message.content, response.usage
-
-if __name__ == "__main__":
-    prompt = """The user will give an input for you to turn into optional keys that will be only Constellation, Star, ASKCONVIS, ASKSTAVIS, ASKSTAPAR, ASKCONCHI. 
-    In that order. ASKCONVIS will be a 1 if they ask about the visibility of a constellation. ASKSTAVIS for the visibility of a star. 
-    ASKSTAPAR for when they ask about the constellation a star belongs to. ASKCONCHI for when they ask about the stars in a constellation.
-    Since this is optional, the alternative would be 0.
-    The USER says: 
-    What constellation is star Vega in?"""
-
-    try:
-        payload, usage = llm_to_json(prompt)
-    except Exception as e:
-        print("LLM call failed:", e)
-        raise
-
-    # Save prettified JSON
-    out_path = Path("output.json")
-    out_path.write_text(json.dumps(payload, indent=2))
-    print(f"Saved JSON to {out_path}")
-    print(
-        f"Usage: prompt={usage.prompt_tokens}, "
-        f"completion={usage.completion_tokens}, total={usage.total_tokens}"
-    )
