@@ -83,6 +83,10 @@ class Query:
         if self.ASKCONVIS:
             if self.constellation is not None:
                 return is_constellation_visible(self.constellation)
+            
+        if self.ASKCONCHI:
+            if self.constellation is not None:
+                return get_constellation_stars(self.constellation)
 
 def calculate_lst(longitude, time):
     # Julian date for the given time
@@ -214,6 +218,28 @@ def is_constellation_visible(constellation_name):
         'stars_visible': visible_stars
     }
 
+def get_constellation_stars(constellation_name):
+    result = pyDatalog.ask(f"star(Star, Bayer, '{constellation_name}', RA, Dec)")
+
+    if not result or not result.answers:
+        return {
+            'constellation': constellation_name,
+            'stars': 'constellation not in database'
+        }
+    
+    stars = []
+    for star, bayer, ra, dec in result.answers:
+        stars.append({
+            'name': star,
+            'bayer': bayer,
+            'ra': ra,
+            'dec': dec
+        })
+
+    return {
+        'constellation': constellation_name,
+        'stars': stars
+    }
 
 # Case: what constellation does ____ star belong to?
 # star_name = ''
