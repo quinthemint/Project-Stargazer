@@ -38,6 +38,7 @@ def llm_to_json(user_prompt: str, **chat_kwargs):
 
             Include **all six fields** in every intent.  
             Set a flag to 1 when you are confident OR uncertain it applies; set to 0 when it clearly does not.
+            If the user asks 'where is x star' flag both ASKSTAVIS and ASKSTAPAR.
 
             **Multiple questions in one sentence**  
             If the user's input contains several separate questions relating to more than one object (star/constellation), create **one
@@ -88,7 +89,7 @@ def json_to_llm(user_prompt: str, info, **chat_kwargs):
             "content": user_prompt,
         },
         {   # structured data you must base your answer on
-            "role": "assistant",
+            "role": "system",
             "content": json.dumps(info, indent=2),
         },
     ]
