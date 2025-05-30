@@ -86,7 +86,7 @@ if user_input:
 
     # Send the LIST of results back to the LLM for natural-language reply
     try:
-        bot_reply, _ = json_to_llm(results)
+        bot_reply, _ = json_to_llm(user_input, results)
     except Exception as e:
         bot_reply = f"❌ API call failed: {e}"
 

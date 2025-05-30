@@ -38,6 +38,7 @@ def llm_to_json(user_prompt: str, **chat_kwargs):
 
             Include **all six fields** in every intent.  
             Set a flag to 1 when you are confident OR uncertain it applies; set to 0 when it clearly does not.
+            If the user asks 'where is x star' flag both ASKSTAVIS and ASKSTAPAR.
 
             **Multiple questions in one sentence**  
             If the user's input contains several separate questions relating to more than one object (star/constellation), create **one
@@ -69,19 +70,27 @@ def llm_to_json(user_prompt: str, **chat_kwargs):
     return data, usage
 
 # instructs llm to turn json with output info into natural language
-def json_to_llm(data: dict, **chat_kwargs):
+def json_to_llm(user_prompt: str, info, **chat_kwargs):
+    """
+    user_prompt : the exact text the user typed
+    info        : dict OR list of dicts with the calculated answers
+    """
     messages = [
         {
             "role": "system",
-            "content": """You are a formatter that turns structured JSON data about stars into clear, natural language.
-            Explain whether the star is visible, where it is (altitude and azimuth), and what constellation it belongs to if the
-            respective information is provided. Avoid repeating field names or JSON terms in the output — 
-            just speak like a knowledgeable astronomy assistant.
-            """,
+            "content": (
+                "You are an astronomy assistant.  Answer the user's question(s) "
+                "using ONLY the information provided in the second message. "
+                "If the information is insufficient, make it briefly clear that you don't have information for part of the question."
+            ),
         },
-        {
+        {   # user’s original question for context
             "role": "user",
-            "content": json.dumps(data, indent=2),
+            "content": user_prompt,
+        },
+        {   # structured data you must base your answer on
+            "role": "system",
+            "content": json.dumps(info, indent=2),
         },
     ]
 
@@ -90,5 +99,4 @@ def json_to_llm(data: dict, **chat_kwargs):
         messages=messages,
         **chat_kwargs,
     )
-
     return response.choices[0].message.content, response.usage

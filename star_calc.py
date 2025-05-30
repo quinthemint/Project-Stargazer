@@ -91,6 +91,10 @@ class Query:
         if self.ASKSTAVIS:
             if self.star is not None:
                 return is_star_visible(self.star)
+        
+        if self.ASKSTAPAR:
+            if self.star is not None:
+                return get_star_constellation(self.star)
             
         if self.ASKCONVIS:
             if self.constellation is not None:
@@ -253,11 +257,21 @@ def get_constellation_stars(constellation_name):
         'stars': stars
     }
 
-# Case: what constellation does ____ star belong to?
-# star_name = ''
-# is_in_constellation(Star, Constellation) <= star(Star, X, Constellation, Y, Z)
-# result = is_in_constellation('vega', X)
-# print(", ".join([x[0] for x in result]))
+def get_star_constellation(star_name):
+    result = pyDatalog.ask(f"star('{star_name}', Bayer, Constellation, RA, Dec)")
+
+    if not result or not result.answers:
+        return {
+            'star': star_name,
+            'visible': 'star not in database'
+        }
+    
+    constellation = result.answers[0]
+
+    return {
+        'star': star_name,
+        'constellation': constellation
+    }
 
 '''
 Questions that can be answered:
