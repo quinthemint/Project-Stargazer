@@ -3,6 +3,7 @@ from datetime import datetime
 import pytz
 from pyDatalog import pyDatalog
 from user_state import user
+import os
 
 terms = 'X, Y, Z, Star, Constellation, constellation, star, is_in_constellation'
 exec(f"from pyDatalog import pyDatalog; pyDatalog.create_terms('{terms}')", globals())
@@ -10,6 +11,17 @@ exec(f"from pyDatalog import pyDatalog; pyDatalog.create_terms('{terms}')", glob
 def initialize_datalog():
 
     pyDatalog.clear()
+
+    # Load facts from external file
+    # star_path = os.path.join(os.path.dirname(__file__), 'star_facts.dlpy')
+    # with open(star_path, 'r') as f:
+    #     facts_code = f.read()
+    #     exec(facts_code, globals())
+
+    # constellation_path = os.path.join(os.path.dirname(__file__), 'constellation_facts.dlpy')
+    # with open(constellation_path, 'r') as f:
+    #     facts_code = f.read()
+    #     exec(facts_code, globals())
 
     + constellation('orion')
     + constellation('lyra')
@@ -193,7 +205,7 @@ def is_star_visible(star_name):
     }
 
 def is_constellation_visible(constellation_name):
-    result = py.Datalog.ask(f"star(Star, Bayer, '{constellation_name}', RA, Dec)")
+    result = pyDatalog.ask(f"star(Star, Bayer, '{constellation_name}', RA, Dec)")
 
     if not result or not result.answers:
         print(f"Constellation '{constellation_name}' not found in the database.")
