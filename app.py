@@ -34,7 +34,6 @@ with st.sidebar:
     if longitude and latitude:
         try:
             user.set_info(longitude, latitude, time_utc)
-            print("IN APP: " + str(user.latitude) + str(user.longitude) + str(user.time))
         except ValueError:
             st.error("Invalid input. Please enter valid numeric values for latitude and longitude.")
     else:
@@ -43,7 +42,7 @@ with st.sidebar:
 # Initialize Mistral client
 client = Mistral(api_key=api_key)
 
-st.title("🔭 Stargazer Chat (Prototype)")
+st.title("🔭 Stargazer Chat")
 
 # Initialize conversation
 if "messages" not in st.session_state:

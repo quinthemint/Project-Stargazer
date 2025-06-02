@@ -80,7 +80,7 @@ class Query:
             key = raw_key.strip().lower()
             if key == "constellation" or key == "star":
                 if raw_value:
-                    value = raw_value.strip().lower()
+                    value = raw_value.strip().capitalize()
                     setattr(self, key_map[key], value)
                 
             elif key in key_map:
@@ -163,16 +163,10 @@ def calculate_star_visibility(ra, dec, longitude, latitude, time):
     az = math.degrees(math.atan2(sin_az, cos_az))
     az = (az + 360) % 360  # Ensure Azimuth is in the range [0, 360]
 
-    print("AZIMUTH: ")
-    print(az)
-    print("ALTITUDE: ")
-    print(alt)
-    
     # Return true if the altitude is above the horizon
     return alt > 0, alt, az
 
 def is_star_visible(star_name):
-    print("IN KB: " + str(user.latitude) + str(user.longitude) + str(user.time))
     # Query the database for the star by name
     result = pyDatalog.ask(f"star('{star_name}', Bayer, Constellation, RA, Dec)")
     
@@ -252,6 +246,13 @@ def get_constellation_stars(constellation_name):
             'dec': dec
         })
 
+    dict = {
+        'constellation': constellation_name,
+        'stars': stars
+    }
+
+    print(dict)
+
     return {
         'constellation': constellation_name,
         'stars': stars
@@ -267,6 +268,13 @@ def get_star_constellation(star_name):
         }
     
     constellation = result.answers[0]
+
+    dict = {
+        'star': star_name,
+        'constellation': constellation
+    }
+
+    print(dict)
 
     return {
         'star': star_name,

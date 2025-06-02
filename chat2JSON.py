@@ -79,7 +79,7 @@ def json_to_llm(user_prompt: str, info, **chat_kwargs):
         {
             "role": "system",
             "content": (
-                "You are an astronomy assistant.  Answer the user's question(s) "
+                "You are an astronomy assistant.  Answer the user's question(s) in a conversational tone"
                 "using ONLY the information provided in the second message. "
                 "If the information is insufficient, make it briefly clear that you don't have information for part of the question."
             ),
